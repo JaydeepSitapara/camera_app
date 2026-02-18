@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
-import 'package:camera_app/core/utils/snackbar_service.dart';
 import 'package:path_provider/path_provider.dart';
 
 class CameraService {
@@ -29,7 +28,6 @@ class CameraService {
         '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
     await file.saveTo(path);
-    SnackBarService.show('Image captured successfully.');
 
     return path;
   }
@@ -37,4 +35,12 @@ class CameraService {
   void dispose() {
     controller?.dispose();
   }
+
+  Future<void> disposeCamera() async {
+    if (controller != null) {
+      await controller!.dispose();
+      controller = null;
+    }
+  }
+
 }

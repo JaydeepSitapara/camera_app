@@ -1,6 +1,8 @@
 import 'package:camera_app/core/services/barcode_services.dart';
 import 'package:camera_app/core/services/camera_services.dart';
+import 'package:camera_app/core/services/shared_pref_services.dart';
 import 'package:camera_app/features/capture/models/captured_image.dart';
+import 'package:camera_app/features/capture/models/session_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'capture_state.dart';
 import '../provider/capture_provider.dart';
@@ -46,6 +48,8 @@ class CaptureController extends Notifier<CaptureState> {
       return;
     }
 
+
+
     state = state.copyWith(
       isSessionActive: false,
       isProcessing: true,
@@ -57,5 +61,13 @@ class CaptureController extends Notifier<CaptureState> {
       isProcessing: false,
       images: processed,
     );
+
+
+    final session = SessionModel(
+      sessionId: DateTime.now().toIso8601String(),
+      images: state.images,
+    );
+
+    await SharedPrefServices.saveLastSession(session);
   }
 }

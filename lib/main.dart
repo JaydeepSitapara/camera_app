@@ -1,3 +1,4 @@
+import 'package:camera_app/features/capture/view/landing_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         scaffoldMessengerKey: scaffoldMessengerKey,
         debugShowCheckedModeBanner: false,
-        home: const CameraScreen(),
+        home: const LandingScreen(),
       ),
     );
   }

@@ -1,4 +1,4 @@
-package com.camera.camera_app1
+package com.scanner.app
 
 import io.flutter.embedding.android.FlutterActivity
 
