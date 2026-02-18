@@ -1,4 +1,4 @@
-# camera_app1
+# camera_app
 
 A new Flutter project.
 
