@@ -38,17 +38,47 @@ class _LandingScreenState extends State<LandingScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E0E0E),
         title: const Text(
-          "Camera Sessions",
+          "Scanner",
           style: TextStyle(color: Colors.white),
         ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : session == null
-              ? const Center(
-                  child: Text(
-                    "No previous session found",
-                    style: TextStyle(color: Colors.white38),
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.history_toggle_off_rounded,
+                          size: 70,
+                          color: Colors.white24,
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          "No Sessions Yet",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        const Text(
+                          "Your latest scanning session will appear here once you complete a scan.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white38,
+                            height: 1.5,
+                          ),
+                        ),
+
+                      ],
+                    ),
                   ),
                 )
               : Column(

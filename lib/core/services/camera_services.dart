@@ -1,46 +1,92 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CameraService {
   CameraController? controller;
 
+  /// Initialize Camera Safely
   Future<void> initialize() async {
-    final cameras = await availableCameras();
+    try {
+      // 1️⃣ Request Permission
+      final status = await Permission.camera.request();
 
-    controller = CameraController(
-      cameras.first,
-      ResolutionPreset.medium,
-      enableAudio: false,
-      imageFormatGroup: Platform.isAndroid
-          ? ImageFormatGroup.nv21
-          : ImageFormatGroup.bgra8888,
-    );
+      if (!status.isGranted) {
+        throw CameraPermissionException(
+          'Camera permission denied',
+        );
+      }
 
-    await controller!.initialize();
+      // 2️⃣ Prevent Reinitialization
+      if (controller != null && controller!.value.isInitialized) {
+        return;
+      }
+
+      // 3️⃣ Get Available Cameras
+      final cameras = await availableCameras();
+
+      if (cameras.isEmpty) {
+        throw CameraException(
+          'NoCameraFound',
+          'No camera available on this device',
+        );
+      }
+
+      controller = CameraController(
+        cameras.first,
+        ResolutionPreset.medium,
+        enableAudio: false,
+        imageFormatGroup: Platform.isAndroid
+            ? ImageFormatGroup.nv21
+            : ImageFormatGroup.bgra8888,
+      );
+
+      await controller!.initialize();
+    } catch (e) {
+      await disposeCamera();
+      rethrow;
+    }
   }
 
+  /// Capture Image Safely
   Future<String> captureImage() async {
-    final XFile file = await controller!.takePicture();
+    try {
+      if (controller == null || !controller!.value.isInitialized) {
+        throw CameraException(
+          'CameraNotInitialized',
+          'Camera is not initialized',
+        );
+      }
 
-    final directory = await getApplicationDocumentsDirectory();
-    final path =
-        '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final XFile file = await controller!.takePicture();
 
-    await file.saveTo(path);
+      final directory = await getApplicationDocumentsDirectory();
+      final path =
+          '${directory.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-    return path;
+      await file.saveTo(path);
+
+      return path;
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  void dispose() {
-    controller?.dispose();
-  }
-
+  /// Dispose camera completely
   Future<void> disposeCamera() async {
     if (controller != null) {
       await controller!.dispose();
       controller = null;
     }
   }
+}
 
+/// Custom Permission Exception
+class CameraPermissionException implements Exception {
+  final String message;
+  CameraPermissionException(this.message);
+
+  @override
+  String toString() => message;
 }

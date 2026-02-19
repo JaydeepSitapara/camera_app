@@ -20,8 +20,21 @@ class CaptureController extends Notifier<CaptureState> {
   }
 
   Future<void> initCamera() async {
-    await _cameraService.initialize();
-    state = state.copyWith(isCameraInitialized: true);
+    try {
+      await _cameraService.initialize();
+
+      state = state.copyWith(
+        isCameraInitialized: true,
+        errorMessage: null,
+      );
+    } catch (e) {
+      final message = e.toString();
+
+      state = state.copyWith(
+        isCameraInitialized: false,
+        errorMessage: message,
+      );
+    }
   }
 
   void startSession() {
@@ -48,8 +61,6 @@ class CaptureController extends Notifier<CaptureState> {
       return;
     }
 
-
-
     state = state.copyWith(
       isSessionActive: false,
       isProcessing: true,
@@ -61,7 +72,6 @@ class CaptureController extends Notifier<CaptureState> {
       isProcessing: false,
       images: processed,
     );
-
 
     final session = SessionModel(
       sessionId: DateTime.now().toIso8601String(),
