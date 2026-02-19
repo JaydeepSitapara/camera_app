@@ -1,7 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:camera_app/features/capture/provider/capture_provider.dart';
 import 'package:camera_app/features/capture/view/results_screen.dart';
-import 'package:camera_app/features/capture/widgets/active_control.dart';
 import 'package:camera_app/features/capture/widgets/start_control.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,7 +19,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   void initState() {
     super.initState();
 
-    /// Initialize camera once screen loads
     Future.microtask(() {
       ref.read(captureControllerProvider.notifier).initCamera();
     });
@@ -28,7 +26,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
-    /// Listen only once here (important – not inside conditional)
     ref.listen(captureControllerProvider, (previous, next) {
       if (previous?.isProcessing == true &&
           next.isProcessing == false &&
@@ -48,9 +45,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final controller = ref.read(captureControllerProvider.notifier);
     final cameraService = ref.read(cameraServiceProvider);
 
-    /// ===== CAMERA NOT INITIALIZED =====
+    /// ==========================
+    /// CAMERA NOT INITIALIZED
+    /// ==========================
     if (!state.isCameraInitialized) {
-      /// ===== ERROR STATE =====
       if (state.errorMessage != null) {
         return Scaffold(
           backgroundColor: Colors.black,
@@ -75,25 +73,16 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-
-                  // /// If permanently denied → Open Settings
-                  // if (state.isPermissionPermanentlyDenied)
-                  //   ElevatedButton(
-                  //     onPressed: () async {
-                  //       await openAppSettings();
-                  //     },
-                  //     child: const Text("Open Settings"),
-                  //   )
-                  // else
                   ElevatedButton(
                     style: ButtonStyle(
-                        shape: WidgetStateProperty.all(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
+                      shape: WidgetStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        backgroundColor:
-                            WidgetStatePropertyAll(Color(0xFF00E5CC))),
+                      ),
+                      backgroundColor:
+                          const WidgetStatePropertyAll(Color(0xFF00E5CC)),
+                    ),
                     onPressed: () async {
                       final status = await Permission.camera.status;
 
@@ -124,7 +113,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         );
       }
 
-      /// ===== LOADING STATE =====
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(
@@ -135,19 +123,23 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       );
     }
 
-    /// ===== CAMERA READY =====
+    /// ==========================
+    /// CAMERA READY
+    /// ==========================
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            /// Camera Preview
+            /// CAMERA PREVIEW
             Positioned.fill(
               child: CameraPreview(cameraService.controller!),
             ),
 
-            /// Top Status Indicator
+            /// ==========================
+            /// TOP STATUS + IMAGE COUNT
+            /// ==========================
             Positioned(
               top: 0,
               left: 0,
@@ -159,36 +151,67 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                     vertical: 12,
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: state.isSessionActive
-                              ? const Color(0xFF00E5CC)
-                              : Colors.white38,
-                        ),
+                      /// LEFT → STATUS
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: state.isSessionActive
+                                  ? const Color(0xFF00E5CC)
+                                  : Colors.white38,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            state.isSessionActive ? 'SCANNING' : 'READY',
+                            style: TextStyle(
+                              color: state.isSessionActive
+                                  ? const Color(0xFF00E5CC)
+                                  : Colors.white60,
+                              fontSize: 12,
+                              letterSpacing: 2,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        state.isSessionActive ? 'SCANNING' : 'READY',
-                        style: TextStyle(
-                          color: state.isSessionActive
-                              ? const Color(0xFF00E5CC)
-                              : Colors.white60,
-                          fontSize: 12,
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.w600,
+
+                      /// RIGHT → IMAGE COUNT
+                      if (state.images.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00E5CC).withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF00E5CC),
+                            ),
+                          ),
+                          child: Text(
+                            "${state.images.length}",
+                            style: const TextStyle(
+                              color: Color(0xFF00E5CC),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
               ),
             ),
 
-            /// Processing Overlay
+            /// ==========================
+            /// PROCESSING OVERLAY
+            /// ==========================
             if (state.isProcessing)
               Container(
                 color: Colors.black45,
@@ -199,7 +222,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                 ),
               ),
 
-            /// Bottom Controls
+            /// ==========================
+            /// BOTTOM CONTROLS
+            /// ==========================
             Positioned(
               bottom: 0,
               left: 0,
@@ -222,17 +247,62 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                   ),
                 ),
                 child: state.isSessionActive
-                    ? ActiveControls(
-                        imagesLength: state.images.length,
-                        isProcessing: state.isProcessing,
-                        onStop: () {
-                          HapticFeedback.heavyImpact();
-                          controller.stopSession();
-                        },
-                        onCapture: () {
-                          HapticFeedback.lightImpact();
-                          controller.captureImage();
-                        },
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const SizedBox(width: 60),
+
+                          /// CENTER → CAPTURE
+                          GestureDetector(
+                            onTap: state.isProcessing
+                                ? null
+                                : () {
+                                    HapticFeedback.lightImpact();
+                                    controller.captureImage();
+                                  },
+                            child: Container(
+                              width: 75,
+                              height: 75,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 4,
+                                ),
+                              ),
+                              child: Center(
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Color(0xFF00E5CC),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          /// RIGHT → STOP
+                          GestureDetector(
+                            onTap: () {
+                              HapticFeedback.heavyImpact();
+                              controller.stopSession();
+                            },
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.red.withOpacity(0.9),
+                              ),
+                              child: const Icon(
+                                Icons.stop,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
                       )
                     : StartControl(
                         onStart: () {
