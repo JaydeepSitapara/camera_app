@@ -1,10 +1,9 @@
 # camera_app
 
-A new Flutter project.
+A Flutter-based camera app that allows users to capture multiple images in a single session. It offers a smooth, real-time scanning experience with instant result viewing. 🚀
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
 
 A few resources to get you started if this is your first Flutter project:
 
