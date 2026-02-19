@@ -2,7 +2,16 @@ import 'package:camera_app/features/capture/models/captured_image.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 
 class BarcodeService {
-  final BarcodeScanner _scanner = BarcodeScanner();
+  final BarcodeScanner _scanner = BarcodeScanner(
+    formats: [
+      BarcodeFormat.qrCode,
+      BarcodeFormat.code128,
+      BarcodeFormat.ean13,
+      BarcodeFormat.ean8,
+      BarcodeFormat.code39,
+      BarcodeFormat.code93,
+    ],
+  );
 
   String _prettifyFormat(BarcodeFormat format) {
     switch (format) {

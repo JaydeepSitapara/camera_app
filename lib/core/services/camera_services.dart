@@ -9,7 +9,6 @@ class CameraService {
   /// Initialize Camera Safely
   Future<void> initialize() async {
     try {
-      // 1️⃣ Request Permission
       final status = await Permission.camera.request();
 
       if (!status.isGranted) {
@@ -18,12 +17,10 @@ class CameraService {
         );
       }
 
-      // 2️⃣ Prevent Reinitialization
       if (controller != null && controller!.value.isInitialized) {
         return;
       }
 
-      // 3️⃣ Get Available Cameras
       final cameras = await availableCameras();
 
       if (cameras.isEmpty) {
@@ -43,6 +40,8 @@ class CameraService {
       );
 
       await controller!.initialize();
+
+      await controller!.setFocusMode(FocusMode.auto);
     } catch (e) {
       await disposeCamera();
       rethrow;
@@ -85,6 +84,7 @@ class CameraService {
 /// Custom Permission Exception
 class CameraPermissionException implements Exception {
   final String message;
+
   CameraPermissionException(this.message);
 
   @override
