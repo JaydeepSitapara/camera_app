@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:camera_app/features/capture/provider/capture_provider.dart';
 import 'package:camera_app/features/capture/view/results_screen.dart';
+import 'package:camera_app/features/capture/widgets/session_close_confirm_dialog.dart';
 import 'package:camera_app/features/capture/widgets/start_control.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,31 +19,15 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   @override
   void initState() {
     super.initState();
-
     Future.microtask(() {
-      ref.read(captureControllerProvider.notifier).initCamera();
+      ref.read(captureProvider.notifier).initCamera();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(captureControllerProvider, (previous, next) {
-      if (previous?.isProcessing == true &&
-          next.isProcessing == false &&
-          next.images.isNotEmpty) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ResultsScreen(
-              capturedImages: next.images,
-            ),
-          ),
-        );
-      }
-    });
-
-    final state = ref.watch(captureControllerProvider);
-    final controller = ref.read(captureControllerProvider.notifier);
+    final state = ref.watch(captureProvider);
+    final controller = ref.read(captureProvider.notifier);
     final cameraService = ref.read(cameraServiceProvider);
 
     /// ==========================
@@ -53,61 +38,34 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         return Scaffold(
           backgroundColor: Colors.black,
           body: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.camera_alt_outlined,
-                    color: Colors.white38,
-                    size: 70,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.camera_alt_outlined,
+                    color: Colors.white38, size: 70),
+                const SizedBox(height: 20),
+                Text(
+                  state.errorMessage!,
+                  style: const TextStyle(color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00E5CC),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    state.errorMessage!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    style: ButtonStyle(
-                      shape: WidgetStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      backgroundColor:
-                          const WidgetStatePropertyAll(Color(0xFF00E5CC)),
-                    ),
-                    onPressed: () async {
-                      final status = await Permission.camera.status;
-
-                      if (status.isPermanentlyDenied) {
-                        await openAppSettings();
-                        return;
-                      }
-
-                      final result = await Permission.camera.request();
-
-                      if (result.isGranted) {
-                        ref
-                            .read(captureControllerProvider.notifier)
-                            .initCamera();
-                      } else if (result.isPermanentlyDenied) {
-                        await openAppSettings();
-                      }
-                    },
-                    child: const Text(
-                      "Retry",
-                      style: TextStyle(color: Colors.black, fontSize: 15),
-                    ),
-                  ),
-                ],
-              ),
+                  onPressed: () async {
+                    final status = await Permission.camera.request();
+                    if (status.isGranted) {
+                      ref.read(captureProvider.notifier).initCamera();
+                    } else {
+                      await openAppSettings();
+                    }
+                  },
+                  child: const Text("Retry",
+                      style: TextStyle(color: Colors.black)),
+                ),
+              ],
             ),
           ),
         );
@@ -124,197 +82,685 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     }
 
     /// ==========================
-    /// CAMERA READY
+    /// MAIN CAMERA UI
     /// ==========================
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            /// CAMERA PREVIEW
-            Positioned.fill(
-              child: CameraPreview(cameraService.controller!),
-            ),
+      child: PopScope(
+        canPop: !state.isSessionActive, // 👈 KEY FIX
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
 
-            /// ==========================
-            /// TOP STATUS + IMAGE COUNT
-            /// ==========================
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      /// LEFT → STATUS
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: state.isSessionActive
-                                  ? const Color(0xFF00E5CC)
-                                  : Colors.white38,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            state.isSessionActive ? 'SCANNING' : 'READY',
-                            style: TextStyle(
-                              color: state.isSessionActive
-                                  ? const Color(0xFF00E5CC)
-                                  : Colors.white60,
-                              fontSize: 12,
-                              letterSpacing: 2,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+          /// Only show dialog if session is active
+          if (state.isSessionActive) {
+            final shouldClose = await showCloseSessionDialog(context);
 
-                      /// RIGHT → IMAGE COUNT
-                      if (state.images.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF00E5CC).withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color(0xFF00E5CC),
-                            ),
-                          ),
-                          child: Text(
-                            "${state.images.length}",
-                            style: const TextStyle(
-                              color: Color(0xFF00E5CC),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+            if (!shouldClose) return;
+
+            await controller.stopSession();
+
+            if (!context.mounted) return;
+
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ResultsScreen(capturedImages: state.images),
               ),
-            ),
+            );
 
-            /// ==========================
-            /// PROCESSING OVERLAY
-            /// ==========================
-            if (state.isProcessing)
-              Container(
-                color: Colors.black45,
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF00E5CC),
-                  ),
-                ),
+            controller.stopSession();
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          body: Stack(
+            children: [
+              /// CAMERA PREVIEW
+              Positioned.fill(
+                child: CameraPreview(cameraService.controller!),
               ),
 
-            /// ==========================
-            /// BOTTOM CONTROLS
-            /// ==========================
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom + 24,
-                  top: 24,
-                  left: 32,
-                  right: 32,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.9),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-                child: state.isSessionActive
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const SizedBox(width: 60),
-
-                          /// CENTER → CAPTURE
-                          GestureDetector(
-                            onTap: state.isProcessing
-                                ? null
-                                : () {
-                                    HapticFeedback.lightImpact();
-                                    controller.captureImage();
-                                  },
-                            child: Container(
-                              width: 75,
-                              height: 75,
+              /// ==========================
+              /// TOP STATUS + IMAGE COUNT
+              /// ==========================
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        /// STATUS
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 4,
-                                ),
+                                color: state.isSessionActive
+                                    ? const Color(0xFF00E5CC)
+                                    : Colors.white38,
                               ),
-                              child: Center(
-                                child: Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xFF00E5CC),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              state.isSessionActive ? 'SCANNING' : 'READY',
+                              style: TextStyle(
+                                color: state.isSessionActive
+                                    ? const Color(0xFF00E5CC)
+                                    : Colors.white60,
+                                fontSize: 12,
+                                letterSpacing: 2,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        /// IMAGE COUNT ONLY IF SESSION ACTIVE
+                        if (state.isSessionActive && state.images.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00E5CC).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFF00E5CC),
+                              ),
+                            ),
+                            child: Text(
+                              "${state.images.length}",
+                              style: const TextStyle(
+                                color: Color(0xFF00E5CC),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              /// PROCESSING OVERLAY
+              if (state.isProcessing)
+                Container(
+                  color: Colors.black45,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF00E5CC),
+                    ),
+                  ),
+                ),
+
+              /// ==========================
+              /// BOTTOM CONTROLS
+              /// ==========================
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).padding.bottom + 24,
+                    top: 24,
+                    left: 32,
+                    right: 32,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.9),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                  child: state.isSessionActive
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const SizedBox(width: 60),
+
+                            /// CAPTURE
+                            GestureDetector(
+                              onTap: state.isProcessing
+                                  ? null
+                                  : () async {
+                                      HapticFeedback.lightImpact();
+                                      await controller.captureImage();
+                                    },
+                              child: Container(
+                                width: 75,
+                                height: 75,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 4,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: CircleAvatar(
+                                    radius: 30,
+                                    backgroundColor: Color(0xFF00E5CC),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          /// RIGHT → STOP
-                          GestureDetector(
-                            onTap: () {
-                              HapticFeedback.heavyImpact();
-                              controller.stopSession();
-                            },
-                            child: Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.red.withOpacity(0.9),
-                              ),
-                              child: const Icon(
-                                Icons.stop,
-                                color: Colors.white,
+                            /// STOP SESSION → ALWAYS GO RESULT
+                            GestureDetector(
+                              onTap: () async {
+                                HapticFeedback.heavyImpact();
+
+                                await controller.stopSession();
+
+                                if (!context.mounted) return;
+
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ResultsScreen(
+                                        capturedImages: state.images),
+                                  ),
+                                );
+
+                                controller.stopSession();
+                              },
+                              child: Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.red.withOpacity(0.9),
+                                ),
+                                child: const Icon(
+                                  Icons.stop,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      )
-                    : StartControl(
-                        onStart: () {
-                          HapticFeedback.mediumImpact();
-                          controller.startSession();
-                        },
-                      ),
+                          ],
+                        )
+                      : StartControl(
+                          onStart: () {
+                            HapticFeedback.mediumImpact();
+                            controller.startSession();
+                          },
+                        ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+// import 'package:camera/camera.dart';
+// import 'package:camera_app/features/capture/provider/capture_provider.dart';
+// import 'package:camera_app/features/capture/view/results_screen.dart';
+// import 'package:camera_app/features/capture/widgets/session_close_confirm_dialog.dart';
+// import 'package:camera_app/features/capture/widgets/start_control.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:permission_handler/permission_handler.dart';
+//
+// class CameraScreen extends ConsumerStatefulWidget {
+//   const CameraScreen({super.key});
+//
+//   @override
+//   ConsumerState<CameraScreen> createState() => _CameraScreenState();
+// }
+//
+// class _CameraScreenState extends ConsumerState<CameraScreen> {
+//   @override
+//   void initState() {
+//     super.initState();
+//     Future.microtask(() {
+//       ref.read(captureProvider.notifier).initCamera();
+//     });
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final state = ref.watch(captureProvider);
+//     final controller = ref.read(captureProvider.notifier);
+//     final cameraService = ref.read(cameraServiceProvider);
+//
+//     /// ==========================
+//     /// CAMERA NOT INITIALIZED
+//     /// ==========================
+//     if (!state.isCameraInitialized) {
+//       if (state.errorMessage != null) {
+//         return Scaffold(
+//           backgroundColor: Colors.black,
+//           body: Center(
+//             child: Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 const Icon(Icons.camera_alt_outlined,
+//                     color: Colors.white38, size: 70),
+//                 const SizedBox(height: 20),
+//                 Text(
+//                   state.errorMessage!,
+//                   style: const TextStyle(color: Colors.white),
+//                   textAlign: TextAlign.center,
+//                 ),
+//                 const SizedBox(height: 24),
+//                 ElevatedButton(
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: const Color(0xFF00E5CC),
+//                   ),
+//                   onPressed: () async {
+//                     final status = await Permission.camera.request();
+//                     if (status.isGranted) {
+//                       ref.read(captureProvider.notifier).initCamera();
+//                     } else {
+//                       await openAppSettings();
+//                     }
+//                   },
+//                   child: const Text("Retry",
+//                       style: TextStyle(color: Colors.black)),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         );
+//       }
+//
+//       return const Scaffold(
+//         backgroundColor: Colors.black,
+//         body: Center(
+//           child: CircularProgressIndicator(color: Color(0xFF00E5CC)),
+//         ),
+//       );
+//     }
+//
+//     /// ==========================
+//     /// MAIN CAMERA UI
+//     /// ==========================
+//     return AnnotatedRegion<SystemUiOverlayStyle>(
+//       value: SystemUiOverlayStyle.light,
+//       child: PopScope(
+//         canPop: false,
+//         onPopInvokedWithResult: (didPop, result) async {
+//           if (didPop) return;
+//
+//           final shouldClose = await showCloseSessionDialog(context);
+//           if (!shouldClose) return;
+//
+//           await controller.stopSession();
+//
+//           if (!context.mounted) return;
+//           Navigator.of(context).pop(true);
+//         },
+//         child: Scaffold(
+//           backgroundColor: Colors.black,
+//           body: Stack(
+//             children: [
+//
+//               /// CAMERA PREVIEW
+//               Positioned.fill(
+//                 child: CameraPreview(cameraService.controller!),
+//               ),
+//
+//               /// ==========================
+//               /// TOP STATUS + IMAGE COUNT
+//               /// ==========================
+//               Positioned(
+//                 top: 0,
+//                 left: 0,
+//                 right: 0,
+//                 child: SafeArea(
+//                   child: Padding(
+//                     padding: const EdgeInsets.symmetric(
+//                       horizontal: 16,
+//                       vertical: 12,
+//                     ),
+//                     child: Row(
+//                       mainAxisAlignment:
+//                       MainAxisAlignment.spaceBetween,
+//                       children: [
+//
+//                         /// LEFT → STATUS
+//                         Row(
+//                           children: [
+//                             Container(
+//                               width: 8,
+//                               height: 8,
+//                               decoration: BoxDecoration(
+//                                 shape: BoxShape.circle,
+//                                 color: state.isSessionActive
+//                                     ? const Color(0xFF00E5CC)
+//                                     : Colors.white38,
+//                               ),
+//                             ),
+//                             const SizedBox(width: 8),
+//                             Text(
+//                               state.isSessionActive
+//                                   ? 'SCANNING'
+//                                   : 'READY',
+//                               style: TextStyle(
+//                                 color: state.isSessionActive
+//                                     ? const Color(0xFF00E5CC)
+//                                     : Colors.white60,
+//                                 fontSize: 12,
+//                                 letterSpacing: 2,
+//                                 fontWeight: FontWeight.w600,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//
+//                         /// RIGHT → IMAGE COUNT
+//                         if (state.images.isNotEmpty)
+//                           Container(
+//                             padding:
+//                             const EdgeInsets.symmetric(
+//                               horizontal: 12,
+//                               vertical: 6,
+//                             ),
+//                             decoration: BoxDecoration(
+//                               color: const Color(0xFF00E5CC)
+//                                   .withOpacity(0.15),
+//                               borderRadius:
+//                               BorderRadius.circular(20),
+//                               border: Border.all(
+//                                 color:
+//                                 const Color(0xFF00E5CC),
+//                               ),
+//                             ),
+//                             child: Text(
+//                               "${state.images.length}",
+//                               style: const TextStyle(
+//                                 color: Color(0xFF00E5CC),
+//                                 fontWeight:
+//                                 FontWeight.bold,
+//                               ),
+//                             ),
+//                           ),
+//                       ],
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//
+//               /// ==========================
+//               /// PROCESSING OVERLAY
+//               /// ==========================
+//               if (state.isProcessing)
+//                 Container(
+//                   color: Colors.black45,
+//                   child: const Center(
+//                     child: CircularProgressIndicator(
+//                       color: Color(0xFF00E5CC),
+//                     ),
+//                   ),
+//                 ),
+//
+//               /// ==========================
+//               /// BOTTOM CONTROLS
+//               /// ==========================
+//               Positioned(
+//                 bottom: 0,
+//                 left: 0,
+//                 right: 0,
+//                 child: Container(
+//                   padding: EdgeInsets.only(
+//                     bottom:
+//                     MediaQuery.of(context)
+//                         .padding
+//                         .bottom +
+//                         24,
+//                     top: 24,
+//                     left: 32,
+//                     right: 32,
+//                   ),
+//                   decoration: BoxDecoration(
+//                     gradient: LinearGradient(
+//                       begin:
+//                       Alignment.bottomCenter,
+//                       end: Alignment.topCenter,
+//                       colors: [
+//                         Colors.black
+//                             .withOpacity(0.9),
+//                         Colors.transparent,
+//                       ],
+//                     ),
+//                   ),
+//                   child: state.isSessionActive
+//                       ? Row(
+//                     mainAxisAlignment:
+//                     MainAxisAlignment
+//                         .spaceBetween,
+//                     children: [
+//                       const SizedBox(
+//                           width: 60),
+//
+//                       /// CAPTURE
+//                       GestureDetector(
+//                         onTap: state
+//                             .isProcessing
+//                             ? null
+//                             : () async {
+//                           HapticFeedback
+//                               .lightImpact();
+//                           await controller
+//                               .captureImage();
+//                         },
+//                         child: Container(
+//                           width: 75,
+//                           height: 75,
+//                           decoration:
+//                           BoxDecoration(
+//                             shape:
+//                             BoxShape
+//                                 .circle,
+//                             border: Border.all(
+//                               color: Colors
+//                                   .white,
+//                               width: 4,
+//                             ),
+//                           ),
+//                           child:
+//                           const Center(
+//                             child:
+//                             CircleAvatar(
+//                               radius: 30,
+//                               backgroundColor:
+//                               Color(
+//                                   0xFF00E5CC),
+//                             ),
+//                           ),
+//                         ),
+//                       ),
+//
+//                       /// STOP
+//                       GestureDetector(
+//                         onTap: () async {
+//                           HapticFeedback
+//                               .heavyImpact();
+//                           await controller
+//                               .stopSession();
+//
+//                           if (!context
+//                               .mounted)
+//                             return;
+//
+//                           Navigator.of(
+//                               context)
+//                               .pop(true);
+//                         },
+//                         child: Container(
+//                           width: 60,
+//                           height: 60,
+//                           decoration:
+//                           BoxDecoration(
+//                             shape:
+//                             BoxShape
+//                                 .circle,
+//                             color: Colors.red
+//                                 .withOpacity(
+//                                 0.9),
+//                           ),
+//                           child:
+//                           const Icon(
+//                             Icons.stop,
+//                             color: Colors
+//                                 .white,
+//                           ),
+//                         ),
+//                       ),
+//                     ],
+//                   )
+//                       : StartControl(
+//                     onStart: () {
+//                       HapticFeedback
+//                           .mediumImpact();
+//                       controller
+//                           .startSession();
+//
+//                     },
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//     // return AnnotatedRegion<SystemUiOverlayStyle>(
+//     //   value: SystemUiOverlayStyle.light,
+//     //   child: PopScope(
+//     //     canPop: false,
+//     //     onPopInvokedWithResult: (didPop, result) async {
+//     //       if (didPop) return;
+//     //
+//     //       final shouldClose = await showCloseSessionDialog(context);
+//     //       if (!shouldClose) return;
+//     //
+//     //       await controller.stopSession();
+//     //
+//     //       if (!context.mounted) return;
+//     //
+//     //       Navigator.of(context).pop(true);
+//     //     },
+//     //     child: Scaffold(
+//     //       backgroundColor: Colors.black,
+//     //       body: Stack(
+//     //         children: [
+//     //           Positioned.fill(
+//     //             child: CameraPreview(cameraService.controller!),
+//     //           ),
+//     //
+//     //           /// Processing overlay
+//     //           if (state.isProcessing)
+//     //             Container(
+//     //               color: Colors.black45,
+//     //               child: const Center(
+//     //                 child: CircularProgressIndicator(
+//     //                     color: Color(0xFF00E5CC)),
+//     //               ),
+//     //             ),
+//     //
+//     //           /// Bottom controls
+//     //           Positioned(
+//     //             bottom: 0,
+//     //             left: 0,
+//     //             right: 0,
+//     //             child: Container(
+//     //               padding: EdgeInsets.only(
+//     //                 bottom: MediaQuery.of(context).padding.bottom + 24,
+//     //                 top: 24,
+//     //                 left: 32,
+//     //                 right: 32,
+//     //               ),
+//     //               decoration: BoxDecoration(
+//     //                 gradient: LinearGradient(
+//     //                   begin: Alignment.bottomCenter,
+//     //                   end: Alignment.topCenter,
+//     //                   colors: [
+//     //                     Colors.black.withOpacity(0.9),
+//     //                     Colors.transparent,
+//     //                   ],
+//     //                 ),
+//     //               ),
+//     //               child: state.isSessionActive
+//     //                   ? Row(
+//     //                 mainAxisAlignment:
+//     //                 MainAxisAlignment.spaceBetween,
+//     //                 children: [
+//     //                   const SizedBox(width: 60),
+//     //
+//     //                   GestureDetector(
+//     //                     onTap: state.isProcessing
+//     //                         ? null
+//     //                         : () async {
+//     //                       HapticFeedback.lightImpact();
+//     //                       await controller.captureImage();
+//     //                     },
+//     //                     child: Container(
+//     //                       width: 75,
+//     //                       height: 75,
+//     //                       decoration: BoxDecoration(
+//     //                         shape: BoxShape.circle,
+//     //                         border: Border.all(
+//     //                             color: Colors.white, width: 4),
+//     //                       ),
+//     //                       child: const Center(
+//     //                         child: CircleAvatar(
+//     //                           radius: 30,
+//     //                           backgroundColor:
+//     //                           Color(0xFF00E5CC),
+//     //                         ),
+//     //                       ),
+//     //                     ),
+//     //                   ),
+//     //
+//     //                   GestureDetector(
+//     //                     onTap: () async {
+//     //                       HapticFeedback.heavyImpact();
+//     //                       await controller.stopSession();
+//     //
+//     //                       if (!context.mounted) return;
+//     //                       Navigator.of(context).pop(true);
+//     //                     },
+//     //                     child: Container(
+//     //                       width: 60,
+//     //                       height: 60,
+//     //                       decoration: BoxDecoration(
+//     //                         shape: BoxShape.circle,
+//     //                         color: Colors.red.withOpacity(0.9),
+//     //                       ),
+//     //                       child: const Icon(Icons.stop,
+//     //                           color: Colors.white),
+//     //                     ),
+//     //                   ),
+//     //                 ],
+//     //               )
+//     //                   : StartControl(
+//     //                 onStart: () {
+//     //                   HapticFeedback.mediumImpact();
+//     //                   controller.startSession();
+//     //                 },
+//     //               ),
+//     //             ),
+//     //           ),
+//     //         ],
+//     //       ),
+//     //     ),
+//     //   ),
+//     // );
+//   }
+// }

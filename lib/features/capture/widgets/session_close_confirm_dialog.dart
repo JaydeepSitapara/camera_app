@@ -1,0 +1,40 @@
+import 'package:flutter/material.dart';
+
+Future<bool> showCloseSessionDialog(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false, // user must tap button
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text("Close Session"),
+          ],
+        ),
+        content: const Text(
+          "Are you sure you want to close this session?\n"
+          "All unsaved data will be lost.",
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Close", style: TextStyle(color: Colors.white),),
+          ),
+        ],
+      );
+    },
+  );
+
+  return result ?? false;
+}
