@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 Future<bool> showCloseSessionDialog(BuildContext context) async {
   final result = await showDialog<bool>(
     context: context,
-    barrierDismissible: false, // user must tap button
+  
     builder: (context) {
       return AlertDialog(
         shape: RoundedRectangleBorder(

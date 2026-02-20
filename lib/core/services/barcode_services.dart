@@ -26,27 +26,23 @@ class BarcodeService {
   }
 
   Future<List<CapturedImage>> processImages(List<CapturedImage> images) async {
-    final List<CapturedImage> processed = [];
-
-    for (final image in images) {
+    final futures = images.map((image) async {
       final input = InputImage.fromFilePath(image.imagePath);
       final barcodes = await _scanner.processImage(input);
 
       if (barcodes.isNotEmpty) {
         final barcode = barcodes.first;
-        processed.add(
-          CapturedImage(
-            imagePath: image.imagePath,
-            barcodeData: barcode.rawValue,
-            barcodeFormat: _prettifyFormat(barcode.format),
-          ),
+        return CapturedImage(
+          imagePath: image.imagePath,
+          barcodeData: barcode.rawValue,
+          barcodeFormat: _prettifyFormat(barcode.format),
         );
-      } else {
-        processed.add(image);
       }
-    }
 
-    return processed;
+      return image;
+    });
+
+    return Future.wait(futures);
   }
 
   Future<void> dispose() async {

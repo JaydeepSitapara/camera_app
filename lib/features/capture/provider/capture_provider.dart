@@ -53,14 +53,18 @@ class CaptureProvider extends Notifier<CaptureState> {
   }
 
   Future<void> captureImage() async {
-    final path = await _cameraService.captureImage();
+    try {
+      final path = await _cameraService.captureImage();
 
-    state = state.copyWith(
-      images: [
-        ...state.images,
-        CapturedImage(imagePath: path),
-      ],
-    );
+      state = state.copyWith(
+        images: [
+          ...state.images,
+          CapturedImage(imagePath: path),
+        ],
+      );
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
+    }
   }
 
   Future<void> stopSession() async {
@@ -74,19 +78,25 @@ class CaptureProvider extends Notifier<CaptureState> {
       isProcessing: true,
     );
 
-    final processed = await _barcodeService.processImages(state.images);
+    try {
+      final processed = await _barcodeService.processImages(state.images);
 
-    state = state.copyWith(
-      isProcessing: false,
-      images: processed,
-    );
+      state = state.copyWith(
+        isProcessing: false,
+        images: processed,
+      );
 
-    final session = SessionModel(
-      sessionId: DateTime.now().toIso8601String(),
-      images: state.images,
-    );
+      final session = SessionModel(
+        sessionId: DateTime.now().toIso8601String(),
+        images: state.images,
+      );
 
-    await SharedPrefServices.saveLastSession(session);
-
+      await SharedPrefServices.saveLastSession(session);
+    } catch (e) {
+      state = state.copyWith(
+        isProcessing: false,
+        errorMessage: e.toString(),
+      );
+    }
   }
 }
