@@ -24,11 +24,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    ref.read(cameraServiceProvider).disposeCamera();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +31,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final controller = ref.read(captureProvider.notifier);
     final cameraService = ref.read(cameraServiceProvider);
 
-    /// ==========================
-    /// CAMERA NOT INITIALIZED
-    /// ==========================
     if (!state.isCameraInitialized) {
       if (state.errorMessage != null) {
         return Scaffold(
@@ -169,7 +161,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                           ],
                         ),
 
-                        /// IMAGE COUNT ONLY IF SESSION ACTIVE
+
                         if (state.isSessionActive && state.images.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -206,9 +198,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                   ),
                 ),
 
-              /// ==========================
-              /// BOTTOM CONTROLS
-              /// ==========================
+
               Positioned(
                 bottom: 0,
                 left: 0,
