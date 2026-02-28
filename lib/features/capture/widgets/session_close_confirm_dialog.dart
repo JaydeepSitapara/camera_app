@@ -1,9 +1,9 @@
+import 'package:camera_app/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
 Future<bool> showCloseSessionDialog(BuildContext context) async {
   final result = await showDialog<bool>(
     context: context,
-  
     builder: (context) {
       return AlertDialog(
         shape: RoundedRectangleBorder(
@@ -11,7 +11,7 @@ Future<bool> showCloseSessionDialog(BuildContext context) async {
         ),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            Icon(Icons.warning_amber_rounded, color: orangeColor),
             SizedBox(width: 8),
             Text("Close Session"),
           ],
@@ -23,13 +23,16 @@ Future<bool> showCloseSessionDialog(BuildContext context) async {
         actions: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: redColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Close", style: TextStyle(color: Colors.white),),
+            child: const Text(
+              "Close",
+              style: TextStyle(color: whiteColor),
+            ),
           ),
         ],
       );

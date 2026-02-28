@@ -1,3 +1,4 @@
+import 'package:camera_app/core/utils/app_colors.dart';
 import 'package:camera_app/features/capture/widgets/badge_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -31,14 +32,14 @@ class ActiveControls extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14),
-                color: Colors.white.withOpacity(0.07),
-                border: Border.all(color: Colors.white24, width: 1),
+                color: whiteColor.withValues(alpha: 0.07),
+                border: Border.all(color: whiteColor24, width: 1),
               ),
               alignment: Alignment.center,
               child: const Text(
                 'STOP',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: whiteColor,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 2,
@@ -57,21 +58,21 @@ class ActiveControls extends StatelessWidget {
               height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isProcessing ? Colors.white24 : Colors.white,
-                border: Border.all(color: Colors.white, width: 3),
+                color: isProcessing ? whiteColor24 : whiteColor,
+                border: Border.all(color: whiteColor, width: 3),
                 boxShadow: isProcessing
                     ? []
                     : [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.25),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
+                        BoxShadow(
+                          color: whiteColor.withValues(alpha: 0.25),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
               ),
               child: Icon(
                 Icons.camera_alt_rounded,
-                color: isProcessing ? Colors.white38 : Colors.black,
+                color: isProcessing ? whiteColor38 : blackColor,
                 size: 28,
               ),
             ),

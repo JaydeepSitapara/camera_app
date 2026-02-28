@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:camera_app/core/utils/app_colors.dart';
 import 'package:camera_app/features/capture/models/captured_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +12,7 @@ class StatItem extends StatelessWidget {
   final IconData icon;
 
   const StatItem({
+    super.key,
     required this.label,
     required this.count,
     required this.color,
@@ -35,7 +37,7 @@ class StatItem extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(color: Colors.white38, fontSize: 11),
+            style: const TextStyle(color: whiteColor38, fontSize: 11),
           ),
         ],
       ),
@@ -44,9 +46,11 @@ class StatItem extends StatelessWidget {
 }
 
 class DividerWidget extends StatelessWidget {
+  const DividerWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 40, color: Colors.white12);
+    return Container(width: 1, height: 40, color: whiteColor12);
   }
 }
 
@@ -54,12 +58,12 @@ class ImageCard extends StatelessWidget {
   final CapturedImage image;
   final VoidCallback onTap;
 
-  const ImageCard({required this.image, required this.onTap});
+  const ImageCard({super.key, required this.image, required this.onTap});
 
   Color get _accentColor {
-    if (image.barcodeFormat == 'QR Code') return const Color(0xFF00E5CC);
-    if (image.barcodeFormat != null) return const Color(0xFFF59E0B);
-    return Colors.white38;
+    if (image.barcodeFormat == 'QR Code') return primaryColor;
+    if (image.barcodeFormat != null) return amberColor;
+    return whiteColor38;
   }
 
   @override
@@ -81,12 +85,12 @@ class ImageCard extends StatelessWidget {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
-                    colors: [Colors.black87, Colors.transparent],
+                    colors: [blackColor87, transparentColor],
                   ),
                 ),
                 child: hasCode
@@ -100,10 +104,10 @@ class ImageCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: _accentColor.withOpacity(0.2),
+                              color: _accentColor.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: _accentColor.withOpacity(0.5),
+                                color: _accentColor.withValues(alpha: 0.5),
                               ),
                             ),
                             child: Text(
@@ -120,7 +124,7 @@ class ImageCard extends StatelessWidget {
                           Text(
                             image.barcodeData!,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: whiteColor,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -132,7 +136,7 @@ class ImageCard extends StatelessWidget {
                     : const Text(
                         'No code detected',
                         style: TextStyle(
-                          color: Colors.white38,
+                          color: whiteColor38,
                           fontSize: 11,
                           fontStyle: FontStyle.italic,
                         ),
@@ -148,7 +152,7 @@ class ImageCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.black54,
+                    color: blackColor54,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -170,12 +174,12 @@ class ImageCard extends StatelessWidget {
 class FullScreenDialog extends StatelessWidget {
   final CapturedImage image;
 
-  const FullScreenDialog({required this.image});
+  const FullScreenDialog({super.key, required this.image});
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: transparentColor,
       insetPadding: EdgeInsets.zero,
       child: Stack(
         alignment: Alignment.center,
@@ -191,13 +195,13 @@ class FullScreenDialog extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: blackColor54,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24),
+                  border: Border.all(color: whiteColor24),
                 ),
                 child: const Icon(
                   Icons.close_rounded,
-                  color: Colors.white,
+                  color: whiteColor,
                   size: 22,
                 ),
               ),
@@ -213,9 +217,9 @@ class FullScreenDialog extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.black87,
+                  color: blackColor87,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white12),
+                  border: Border.all(color: whiteColor12),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -224,7 +228,7 @@ class FullScreenDialog extends StatelessWidget {
                     Text(
                       image.barcodeFormat ?? 'Code',
                       style: const TextStyle(
-                        color: Colors.white38,
+                        color: whiteColor38,
                         fontSize: 11,
                         letterSpacing: 1,
                       ),
@@ -236,7 +240,7 @@ class FullScreenDialog extends StatelessWidget {
                           child: SelectableText(
                             image.barcodeData!,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: whiteColor,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -251,7 +255,7 @@ class FullScreenDialog extends StatelessWidget {
                           },
                           icon: const Icon(
                             Icons.copy_rounded,
-                            color: Colors.white54,
+                            color: whiteColor54,
                             size: 20,
                           ),
                         ),

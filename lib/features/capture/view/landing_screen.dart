@@ -1,3 +1,4 @@
+import 'package:camera_app/core/utils/app_colors.dart';
 import 'package:camera_app/features/capture/provider/last_seesion_provider.dart';
 import 'package:camera_app/features/capture/view/camera_screen.dart';
 import 'package:camera_app/features/capture/view/results_screen.dart';
@@ -12,90 +13,85 @@ class LandingScreen extends ConsumerWidget {
     final sessionAsync = ref.watch(lastSessionProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E),
+      backgroundColor: darkBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0E0E0E),
-        title: const Text("Scanner",
-            style: TextStyle(color: Colors.white)),
+        backgroundColor: darkBackgroundColor,
+        title: const Text("Scanner", style: TextStyle(color: whiteColor)),
       ),
       body: sessionAsync.when(
-        loading: () =>
-        const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const Center(
             child: Text("Something went wrong",
-                style: TextStyle(color: Colors.white))),
+                style: TextStyle(color: whiteColor))),
         data: (session) {
           if (session == null) {
-            return const Center(
+            return Center(
               child: Text("No Sessions Yet",
-                  style: TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: whiteColor70)),
             );
           }
 
           final imageCount = session.images.length;
 
-          return Column(children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ResultsScreen(
-                        capturedImages: session.images,
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ResultsScreen(
+                          capturedImages: session.images,
+                        ),
                       ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: darkGreyColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: whiteColor12),
                     ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                    children: [
-                      const Text("Last Session",
-                          style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 12)),
-                      const SizedBox(height: 8),
-                      Text("$imageCount Captured Images",
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 8),
-                      const Text("Tap to view details",
-                          style:
-                          TextStyle(color: Colors.white54)),
-                    ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Last Session",
+                            style:
+                                TextStyle(color: whiteColor38, fontSize: 12)),
+                        const SizedBox(height: 8),
+                        Text("$imageCount Captured Images",
+                            style: const TextStyle(
+                                color: whiteColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 8),
+                        const Text("Tap to view details",
+                            style: TextStyle(color: whiteColor54)),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            )
-          ],);
+              )
+            ],
+          );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF00E5CC),
+        backgroundColor: primaryColor,
         onPressed: () async {
           final updated = await Navigator.push(
             context,
-            MaterialPageRoute(
-                builder: (_) => const CameraScreen()),
+            MaterialPageRoute(builder: (_) => const CameraScreen()),
           );
 
           if (updated == true) {
             ref.invalidate(lastSessionProvider);
           }
         },
-        child:
-        const Icon(Icons.camera_alt, color: Colors.black),
+        child: const Icon(Icons.camera_alt, color: blackColor),
       ),
     );
   }

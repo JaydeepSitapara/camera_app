@@ -1,12 +1,6 @@
-import 'dart:io';
+import 'package:camera_app/core/utils/app_colors.dart';
 import 'package:camera_app/features/capture/widgets/result_screen_widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../models/captured_image.dart';
-
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../models/captured_image.dart';
 
 class ResultsScreen extends StatelessWidget {
@@ -25,19 +19,19 @@ class ResultsScreen extends StatelessWidget {
         capturedImages.where((i) => i.barcodeFormat == null).length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E),
+      backgroundColor: darkBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0E0E0E),
+        backgroundColor: darkBackgroundColor,
         elevation: 0,
         title: const Text(
           'Session Results',
           style: TextStyle(
-            color: Colors.white,
+            color: whiteColor,
             fontWeight: FontWeight.w700,
             fontSize: 18,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: whiteColor),
       ),
       body: Column(
         children: [
@@ -46,30 +40,30 @@ class ResultsScreen extends StatelessWidget {
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
+              color: darkGreyColor,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white12),
+              border: Border.all(color: whiteColor12),
             ),
             child: Row(
               children: [
                 StatItem(
                   label: 'QR Codes',
                   count: qrCount,
-                  color: const Color(0xFF00E5CC),
+                  color: primaryColor,
                   icon: Icons.qr_code_2_rounded,
                 ),
                 DividerWidget(),
                 StatItem(
                   label: 'Barcodes',
                   count: barcodeCount,
-                  color: const Color(0xFFF59E0B),
+                  color: amberColor,
                   icon: Icons.view_week_rounded,
                 ),
                 DividerWidget(),
                 StatItem(
                   label: 'Plain',
                   count: plainCount,
-                  color: Colors.white38,
+                  color: whiteColor38,
                   icon: Icons.image_rounded,
                 ),
               ],
@@ -82,7 +76,7 @@ class ResultsScreen extends StatelessWidget {
                 ? const Center(
                     child: Text(
                       'No images captured',
-                      style: TextStyle(color: Colors.white38),
+                      style: TextStyle(color: whiteColor38),
                     ),
                   )
                 : GridView.builder(

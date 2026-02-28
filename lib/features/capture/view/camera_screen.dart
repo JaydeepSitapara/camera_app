@@ -1,4 +1,5 @@
 import 'package:camera/camera.dart';
+import 'package:camera_app/core/utils/app_colors.dart';
 import 'package:camera_app/features/capture/provider/capture_provider.dart';
 import 'package:camera_app/features/capture/view/results_screen.dart';
 import 'package:camera_app/features/capture/widgets/session_close_confirm_dialog.dart';
@@ -24,7 +25,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(captureProvider);
@@ -34,23 +34,23 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     if (!state.isCameraInitialized) {
       if (state.errorMessage != null) {
         return Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: blackColor,
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.camera_alt_outlined,
-                    color: Colors.white38, size: 70),
+                    color: whiteColor38, size: 70),
                 const SizedBox(height: 20),
                 Text(
                   state.errorMessage!,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: whiteColor),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00E5CC),
+                    backgroundColor: primaryColor,
                   ),
                   onPressed: () async {
                     final status = await Permission.camera.request();
@@ -60,8 +60,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                       await openAppSettings();
                     }
                   },
-                  child: const Text("Retry",
-                      style: TextStyle(color: Colors.black)),
+                  child:
+                      const Text("Retry", style: TextStyle(color: blackColor)),
                 ),
               ],
             ),
@@ -70,10 +70,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       }
 
       return const Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: blackColor,
         body: Center(
           child: CircularProgressIndicator(
-            color: Color(0xFF00E5CC),
+            color: primaryColor,
           ),
         ),
       );
@@ -109,7 +109,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
           }
         },
         child: Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: blackColor,
           body: Stack(
             children: [
               /// CAMERA PREVIEW
@@ -142,8 +142,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: state.isSessionActive
-                                    ? const Color(0xFF00E5CC)
-                                    : Colors.white38,
+                                    ? primaryColor
+                                    : whiteColor38,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -151,8 +151,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                               state.isSessionActive ? 'SCANNING' : 'READY',
                               style: TextStyle(
                                 color: state.isSessionActive
-                                    ? const Color(0xFF00E5CC)
-                                    : Colors.white60,
+                                    ? primaryColor
+                                    : whiteColor60,
                                 fontSize: 12,
                                 letterSpacing: 2,
                                 fontWeight: FontWeight.w600,
@@ -161,22 +161,21 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                           ],
                         ),
 
-
                         if (state.isSessionActive && state.images.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00E5CC).withOpacity(0.15),
+                              color: primaryColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: const Color(0xFF00E5CC),
+                                color: primaryColor,
                               ),
                             ),
                             child: Text(
                               "${state.images.length}",
                               style: const TextStyle(
-                                color: Color(0xFF00E5CC),
+                                color: primaryColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -190,14 +189,13 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
               /// PROCESSING OVERLAY
               if (state.isProcessing)
                 Container(
-                  color: Colors.black45,
+                  color: blackColor45,
                   child: const Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF00E5CC),
+                      color: primaryColor,
                     ),
                   ),
                 ),
-
 
               Positioned(
                 bottom: 0,
@@ -215,8 +213,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        Colors.black.withOpacity(0.9),
-                        Colors.transparent,
+                        blackColor.withValues(alpha: 0.9),
+                        transparentColor,
                       ],
                     ),
                   ),
@@ -240,20 +238,19 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.white,
+                                    color: whiteColor,
                                     width: 4,
                                   ),
                                 ),
                                 child: const Center(
                                   child: CircleAvatar(
                                     radius: 30,
-                                    backgroundColor: Color(0xFF00E5CC),
+                                    backgroundColor: primaryColor,
                                   ),
                                 ),
                               ),
                             ),
 
-                           
                             GestureDetector(
                               onTap: () async {
                                 HapticFeedback.heavyImpact();
@@ -282,11 +279,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                                 height: 60,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.red.withOpacity(0.9),
+                                  color: redColor.withValues(alpha: 0.9),
                                 ),
                                 child: const Icon(
                                   Icons.stop,
-                                  color: Colors.white,
+                                  color: whiteColor,
                                 ),
                               ),
                             ),

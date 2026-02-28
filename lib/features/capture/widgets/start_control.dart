@@ -1,8 +1,10 @@
+import 'package:camera_app/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class StartControl extends StatelessWidget {
   final VoidCallback onStart;
-  const StartControl({required this.onStart});
+
+  const StartControl({super.key, required this.onStart});
 
   @override
   Widget build(BuildContext context) {
@@ -12,8 +14,8 @@ class StartControl extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onStart,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF00E5CC),
-          foregroundColor: Colors.black,
+          backgroundColor: primaryColor,
+          foregroundColor: blackColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
