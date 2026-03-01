@@ -2,6 +2,8 @@ import 'package:camera/camera.dart';
 import 'package:camera_app/core/utils/app_colors.dart';
 import 'package:camera_app/features/capture/provider/capture_provider.dart';
 import 'package:camera_app/features/capture/view/results_screen.dart';
+import 'package:camera_app/features/capture/widgets/camera_controls.dart';
+import 'package:camera_app/features/capture/widgets/circular_progress_indicator.dart';
 import 'package:camera_app/features/capture/widgets/session_close_confirm_dialog.dart';
 import 'package:camera_app/features/capture/widgets/start_control.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +33,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final controller = ref.read(captureProvider.notifier);
     final cameraService = ref.read(cameraServiceProvider);
 
+    ///handle error state
     if (!state.isCameraInitialized) {
       if (state.errorMessage != null) {
         return Scaffold(
@@ -43,7 +46,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                     color: whiteColor38, size: 70),
                 const SizedBox(height: 20),
                 Text(
-                  state.errorMessage!,
+                  state.errorMessage ?? '',
                   style: const TextStyle(color: whiteColor),
                   textAlign: TextAlign.center,
                 ),
@@ -69,10 +72,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         );
       }
 
-      return const Scaffold(
+      ///handle loading state
+      return Scaffold(
         backgroundColor: blackColor,
         body: Center(
-          child: CircularProgressIndicator(
+          child: LoaderWidget(
             color: primaryColor,
           ),
         ),
@@ -82,7 +86,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: PopScope(
-        canPop: !state.isSessionActive, // 👈 KEY FIX
+        canPop: !state.isSessionActive,
         onPopInvokedWithResult: (didPop, result) async {
           if (didPop) return;
 
@@ -119,9 +123,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
                     : const SizedBox.shrink(),
               ),
 
-              /// ==========================
-              /// TOP STATUS + IMAGE COUNT
-              /// ==========================
               Positioned(
                 top: 0,
                 left: 0,
@@ -190,113 +191,14 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
               if (state.isProcessing)
                 Container(
                   color: blackColor45,
-                  child: const Center(
-                    child: CircularProgressIndicator(
+                  child: Center(
+                    child: LoaderWidget(
                       color: primaryColor,
                     ),
                   ),
                 ),
 
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).padding.bottom + 24,
-                    top: 24,
-                    left: 32,
-                    right: 32,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        blackColor.withValues(alpha: 0.9),
-                        transparentColor,
-                      ],
-                    ),
-                  ),
-                  child: state.isSessionActive
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const SizedBox(width: 60),
-
-                            /// CAPTURE
-                            GestureDetector(
-                              onTap: state.isProcessing
-                                  ? null
-                                  : () async {
-                                      HapticFeedback.lightImpact();
-                                      await controller.captureImage();
-                                    },
-                              child: Container(
-                                width: 75,
-                                height: 75,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: whiteColor,
-                                    width: 4,
-                                  ),
-                                ),
-                                child: const Center(
-                                  child: CircleAvatar(
-                                    radius: 30,
-                                    backgroundColor: primaryColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            GestureDetector(
-                              onTap: () async {
-                                HapticFeedback.heavyImpact();
-
-                                await controller.stopSession();
-
-                                if (!context.mounted) return;
-
-                                final processedImages =
-                                    ref.read(captureProvider).images;
-
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ResultsScreen(
-                                        capturedImages: processedImages),
-                                  ),
-                                );
-
-                                if (context.mounted) {
-                                  Navigator.of(context).pop(true);
-                                }
-                              },
-                              child: Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: redColor.withValues(alpha: 0.9),
-                                ),
-                                child: const Icon(
-                                  Icons.stop,
-                                  color: whiteColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : StartControl(
-                          onStart: () {
-                            HapticFeedback.mediumImpact();
-                            controller.startSession();
-                          },
-                        ),
-                ),
-              ),
+              CameraControls(),
             ],
           ),
         ),

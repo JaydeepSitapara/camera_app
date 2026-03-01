@@ -2,6 +2,7 @@ import 'package:camera_app/core/utils/app_colors.dart';
 import 'package:camera_app/features/capture/provider/last_seesion_provider.dart';
 import 'package:camera_app/features/capture/view/camera_screen.dart';
 import 'package:camera_app/features/capture/view/results_screen.dart';
+import 'package:camera_app/features/capture/widgets/circular_progress_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,7 +20,10 @@ class LandingScreen extends ConsumerWidget {
         title: const Text("Scanner", style: TextStyle(color: whiteColor)),
       ),
       body: sessionAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(
+            child: LoaderWidget(
+          color: primaryColor,
+        )),
         error: (e, _) => const Center(
             child: Text("Something went wrong",
                 style: TextStyle(color: whiteColor))),
